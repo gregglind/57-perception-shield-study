@@ -70,6 +70,8 @@ var config = {
   // addon-specific modules to load/unload during `startup`, `shutdown`
   "modules": [
     // can use ${slug} here for example
+    `${slug}/Satisfaction.jsm`,
+  }
   ],
   // sets the logging for BOTH the bootstrap file AND shield-study-utils
   "log": {

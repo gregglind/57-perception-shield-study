@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "ln -s ../../.. node_modules/shield-studies-addon-utils",
     "prebuild": "cp node_modules/shield-studies-addon-utils/dist/StudyUtils.jsm addon/",
     "build": "XPI=shield-embedded-web-extension.xpi bash ./bin/xpi.sh",
     "eslint": "eslint addon --ext jsm --ext js --ext json --",
@@ -21,8 +20,7 @@
   "bugs": {
     "url": "https://github.com/gregglind/57-perception-shield-study/issues"
   },
-  "homepage": "https://github.com/gregglind/57-perception-shield-study#readme"
-
+  "homepage": "https://github.com/gregglind/57-perception-shield-study#readme",
   "devDependencies": {
     "ajv": "^5.1.1",
     "datauri": "^1.0.5",
