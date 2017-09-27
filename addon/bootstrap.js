@@ -4,6 +4,9 @@
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
 
 const { utils: Cu } = Components;
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
 Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -13,10 +16,10 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 //const STUDYUTILSPATH = `${__SCRIPT_URI_SPEC__}/../${studyConfig.studyUtilsPath}`;
 //const { studyUtils } = Cu.import(STUDYUTILSPATH, {});
 
-const BASERESOURCE = "perception";
+const BASERESOURCE = "perception-study";
 
 XPCOMUtils.defineLazyModuleGetter(this, "studyUtils",
-  `resource://perception/StudyUtils.jsm`);
+  `resource://${BASERESOURCE}/StudyUtils.jsm`);
 XPCOMUtils.defineLazyModuleGetter(this, "Feature",
   `resource://${BASERESOURCE}/lib/Feature.jsm`);
 XPCOMUtils.defineLazyModuleGetter(this, "config",
@@ -25,9 +28,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "config",
 
 //const CONFIGPATH = `${__SCRIPT_URI_SPEC__}/../Config.jsm`;
 //const { config } = Cu.import(CONFIGPATH, {});
-const studyConfig = config.study;
-
-const REASONS = studyUtils.REASONS;
 
 
 // var log = createLog(studyConfig.study.studyName, config.log.bootstrap.level);  // defined below.
@@ -49,10 +49,6 @@ async function startup(addonData, reason) {
   // addonData: Array [ "id", "version", "installPath", "resourceURI", "instanceID", "webExtension" ]  bootstrap.js:48
   console.log("startup", studyUtils.REASONS[reason] || reason);
 
-  Cu.import("resource://somealias/lib/AddonPrefs.jsm");
-  console.log('COOL');
-  Cu.unload("resource://somealias/lib/AddonPrefs.jsm")
-
   // setup the studyUtils so that Telemetry is valid
   studyUtils.setup({
     ...config,
@@ -60,9 +56,9 @@ async function startup(addonData, reason) {
   });
 
   // choose the variation for this particular user, then set it.
-  const variation = (studyConfig.forceVariation ||
+  const variation = (config.study.forceVariation ||
     await studyUtils.deterministicVariation(
-      studyConfig.weightedVariations
+      config.study.weightedVariations
     )
   );
   studyUtils.setVariation(variation);
@@ -126,11 +122,10 @@ function shutdown(addonData, reason) {
     // QA NOTE:  unload addon specific modules here.
 
 
-
     // clean up our modules.
-    Cu.unload(CONFIGPATH);
-    Cu.unload(STUDYUTILSPATH);
-
+    Cu.unload(`resource://${BASERESOURCE}/StudyUtils.jsm`);
+    Cu.unload(`resource://${BASERESOURCE}/Config.jsm`);
+    Cu.unload(`resource://${BASERESOURCE}/lib/Feature.jsm`);
 
   }
 }
@@ -140,7 +135,8 @@ function uninstall(addonData, reason) {
 }
 
 function install(addonData, reason) {
-  console.log("install", studyUtils.REASONS[reason] || reason);
+  // TODO resource paths aren't avaiable yet
+  console.log("install", reason);
   // handle ADDON_UPGRADE (if needful) here
 }
 

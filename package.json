@@ -46,7 +46,7 @@
     "hasEmbeddedWebExtension": false,
     "creator": "Gregg Lind <glind@mozilla.com>",
     "description": "Measuring perception for 56 and 57 releases",
-    "chromeResource": "perception"
+    "chromeResource": "perception-study"
   },
   "dependencies": {}
 }
