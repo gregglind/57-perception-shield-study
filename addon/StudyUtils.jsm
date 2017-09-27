@@ -84,46 +84,57 @@ s+="         , parentSchema: validate.schema"+e.schemaPath+" , data: "+u+" "),s+
 
 module.exports = {
 	"name": "shield-studies-addon-utils",
-	"version": "4.0.0",
-	"description": "Utilities for building  Shield-Study Mozilla Firefox addons.",
-	"main": "lib/index.js",
-	"scripts": {
-		"test": "npm-run-all test:*",
-		"test:func": "export FIREFOX_BINARY=${FIREFOX_BINARY:-beta} && npm run build && XPI_NAME=dist/example_webextension-0.0.1.zip mocha test/functional/",
-		"predist": "npm run eslint",
-		"dist": "webpack",
-		"eslint": "eslint src --ext jsm --ext js --ext json"
-	},
+	"description": "Utilities for building Shield-Study Mozilla Firefox addons.",
+	"version": "4.1.0",
 	"author": "Gregg Lind <glind@mozilla.com>",
-	"license": "MPL-2.0",
-	"dependencies": {},
+	"bugs": {
+		"url": "https://github.com/mozilla/shield-studies-addon-utils/issues"
+	},
+	"dependencies": {
+		"assert": "^1.4.1",
+		"fs-extra": "^4.0.0",
+		"fx-runner": "^1.0.7",
+		"geckodriver": "^1.8.0",
+		"mocha": "^3.4.2",
+		"path": "^0.12.7",
+		"selenium-webdriver": "^3.4.0"
+	},
 	"devDependencies": {
 		"ajv": "^4.11.2",
 		"eslint": "^4.0.0",
 		"eslint-plugin-json": "^1.2.0",
 		"eslint-plugin-mozilla": "^0.4.0",
+		"fixpack": "^2.3.1",
 		"shield-study-schemas": "^0.8.3",
 		"webpack": "^2.6.1"
-	},
-	"bugs": {
-		"url": "https://github.com/mozilla/shield-studies-addon-utils/issues"
 	},
 	"files": [
 		"dist"
 	],
+	"homepage": "https://github.com/mozilla/shield-studies-addon-utils#readme",
+	"keywords": [
+		"addon",
+		"jsm",
+		"mozilla",
+		"normandy",
+		"shield",
+		"shield-study"
+	],
+	"license": "MPL-2.0",
+	"main": "lib/index.js",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/mozilla/shield-studies-addon-utils.git"
 	},
-	"keywords": [
-		"mozilla",
-		"addon",
-		"shield",
-		"shield-study",
-		"normandy",
-		"jsm"
-	],
-	"homepage": "https://github.com/mozilla/shield-studies-addon-utils#readme"
+	"scripts": {
+		"build-test-addon-xpi": "./bin/make_xpi.sh",
+		"dist": "webpack",
+		"eslint": "eslint src --ext jsm --ext js --ext json",
+		"predist": "npm run eslint",
+		"prepack": "fixpack && npm run dist",
+		"pretest": "npm run dist && npm run build-test-addon-xpi",
+		"test": "export FIREFOX_BINARY=firefox && XPI_NAME=test-addon/test-addon.xpi mocha test"
+	}
 };
 
 /***/ }),
@@ -494,10 +505,6 @@ module.exports = g;
 "use strict";
 
 
-/*
-TODO glind survey / urls & query args
-TODO glind publish as v4
-*/
 const EXPORTED_SYMBOLS = ["studyUtils"];
 
 const UTILS_VERSION = __webpack_require__(1).version;
@@ -509,7 +516,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.importGlobalProperties(["URL", "crypto", "URLSearchParams"]);
 
-const log = createLog("shield-study-utils", "Debug");
+let log;
 
 // telemetry utils
 const CID = Cu.import("resource://gre/modules/ClientID.jsm", null);
@@ -590,6 +597,7 @@ function merge(source) {
 function mergeQueryArgs(url, ...args) {
   /* currently left to right*/
   // TODO, glind, decide order of merge here
+  // TODO, use Object.assign, or ES7 spread
   const U = new URL(url);
   let q = U.search || "?";
   q = new URLSearchParams(q);
@@ -678,11 +686,15 @@ class StudyUtils {
 
     // expose validation methods
     this.jsonschema = jsonschema;
+
+    this.REASONS = REASONS;
   }
   throwIfNotSetup(name = "unknown") {
     if (!this._isSetup) throw new Error(name + ": this method can't be used until `setup` is called");
   }
   setup(config) {
+    log = createLog("shield-study-utils", config.log.studyUtils.level);
+
     log.debug("setting up!");
     jsonschema.validateOrThrow(config, schemas.studySetup);
 
@@ -699,6 +711,10 @@ class StudyUtils {
     this.throwIfNotSetup("openTab");
     log.debug(url, params);
     log.debug("opening this formatted tab", url, params);
+    if (!Services.wm.getMostRecentWindow("navigator:browser").gBrowser) {
+      // Wait for the window to be opened
+      await new Promise(resolve => setTimeout(resolve, 30000));
+    }
     Services.wm.getMostRecentWindow("navigator:browser").gBrowser.addTab(url, params);
   }
   async getTelemetryId() {
@@ -713,6 +729,19 @@ class StudyUtils {
     this.throwIfNotSetup("getvariation");
     return this._variation;
   }
+
+  async deterministicVariation(weightedVariations, rng = null) {
+    // hash the studyName and telemetryId to get the same branch every time.
+    this.throwIfNotSetup("deterministicVariation needs studyName");
+    // this is the standard arm choosing method
+    let fraction = rng;
+    if (fraction === null) {
+      const clientId = await this.getTelemetryId();
+      fraction = await this.sample.hashFraction(this.config.study.studyName + clientId, 12);
+    }
+    return this.sample.chooseWeighted(weightedVariations, fraction);
+  }
+
   getShieldId() {
     const key = "extensions.shield-recipe-client.user_id";
     return Services.prefs.getCharPref(key, "");
@@ -721,7 +750,7 @@ class StudyUtils {
     log.debug("getting info");
     this.throwIfNotSetup("info");
     return {
-      studyName: this.config.studyName,
+      studyName: this.config.study.studyName,
       addon: this.config.addon,
       variation: this.getVariation(),
       shieldId: this.getShieldId(),
@@ -730,33 +759,30 @@ class StudyUtils {
   // TODO glind, maybe this is getter / setter?
   get telemetryConfig() {
     this.throwIfNotSetup("telemetryConfig");
-    return this.config.telemetry;
+    return this.config.study.telemetry;
   }
   firstSeen() {
     log.debug(`firstSeen`);
-    this.throwIfNotSetup("firstSeen");
+    this.throwIfNotSetup("firstSeen uses telemetry.");
     this._telemetry({study_state: "enter"}, "shield-study");
   }
   setActive() {
-    this.throwIfNotSetup("setActive");
+    this.throwIfNotSetup("setActive uses telemetry.");
     const info = this.info();
     log.debug("marking TelemetryEnvironment", info.studyName, info.variation.name);
     TelemetryEnvironment.setExperimentActive(info.studyName, info.variation.name);
   }
   unsetActive() {
-    this.throwIfNotSetup("unsetActive");
+    this.throwIfNotSetup("unsetActive uses telemetry.");
     const info = this.info();
     log.debug("unmarking TelemetryEnvironment", info.studyName, info.variation.name);
     TelemetryEnvironment.setExperimentInactive(info.studyName);
   }
-  surveyUrl(urlTemplate) {
-    // TODO glind, what is this?
-    this.throwIfNotSetup("surveyUrl");
-    log.debug(`survey: ${urlTemplate} filled with args`);
-  }
   uninstall(id) {
-    this.throwIfNotSetup("uninstall");
     if (!id) id = this.info().addon.id;
+    if (!id) {
+      this.throwIfNotSetup("uninstall needs addon.id as arg or from setup.");
+    }
     log.debug(`about to uninstall ${id}`);
     AddonManager.getAddonByID(id, addon => addon.uninstall());
   }
@@ -779,7 +805,7 @@ class StudyUtils {
     this.unsetActive();
     // TODO glind, think about reason vs fullname
     // TODO glind, think about race conditions for endings, ensure only one exit
-    const ending = this.config.endings[reason];
+    const ending = this.config.study.endings[reason];
     if (ending) {
       const {baseUrl, exactUrl} = ending;
       if (exactUrl) {
@@ -829,7 +855,7 @@ class StudyUtils {
     return queryArgs;
   }
 
-  _telemetry(data, bucket = "shield-study-addon") {
+  async _telemetry(data, bucket = "shield-study-addon") {
     log.debug(`telemetry in:  ${bucket} ${JSON.stringify(data)}`);
     this.throwIfNotSetup("_telemetry");
     const info = this.info();
@@ -870,6 +896,8 @@ class StudyUtils {
     }
     // emit(TelemetryWatcher, 'telemetry', [bucket, payload]);
     log.debug(`telemetry: ${JSON.stringify(payload)}`);
+    // FIXME marcrowo: addClientId makes the ping not appear in test?
+    // seems like a problem with Telemetry, not the shield-study-utils library
     const telOptions = {addClientId: true, addEnvironment: true};
     if (!this.telemetryConfig.send) {
       log.debug("NOT sending.  `telemetryConfig.send` is false");
@@ -879,13 +907,13 @@ class StudyUtils {
   }
 
   // telemetry from addon, mostly from webExtension message.
-  telemetry(data) {
+  async telemetry(data) {
     log.debug(`telemetry ${JSON.stringify(data)}`);
     const toSubmit = {
       attributes: data,
     };
     // lets check early, and respond with something useful?
-    this._telemetry(toSubmit, "shield-study-addon");
+    return this._telemetry(toSubmit, "shield-study-addon");
   }
   telemetryError(errorReport) {
     return this._telemetry(errorReport, "shield-study-error");
@@ -893,14 +921,15 @@ class StudyUtils {
   setLoggingLevel(descriptor) {
     log.level = Log.Level[descriptor];
   }
+
 }
 
 function createLog(name, levelWord) {
   Cu.import("resource://gre/modules/Log.jsm");
   var L = Log.repository.getLogger(name);
   L.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
-  L.debug("log made", name, levelWord, Log.Level[levelWord]);
   L.level = Log.Level[levelWord] || Log.Level.Debug; // should be a config / pref
+  L.debug("log made", name, levelWord, Log.Level[levelWord]);
   return L;
 }
 /** addon state change reasons */
@@ -966,9 +995,47 @@ module.exports = {
 		}
 	},
 	"properties": {
-		"studyName": {
-			"$ref": "#/definitions/idString",
-			"description": "Name of a particular study.  Usually the addon_id."
+		"study": {
+			"type": "object",
+			"properties": {
+				"studyName": {
+					"$ref": "#/definitions/idString",
+					"description": "Name of a particular study.  Usually the addon_id."
+				},
+				"endings": {
+					"type": "object",
+					"additionalProperties": {
+						"$ref": "#/definitions/ending"
+					}
+				},
+				"telemetry": {
+					"type": "object",
+					"properties": {
+						"removeTestingFlag": {
+							"type": "boolean"
+						},
+						"send": {
+							"type": "boolean"
+						},
+						"onInvalid": {
+							"type": "string",
+							"enum": [
+								"throw",
+								"log"
+							]
+						}
+					},
+					"required": [
+						"removeTestingFlag",
+						"send"
+					]
+				}
+			},
+			"required": [
+				"studyName",
+				"endings",
+				"telemetry"
+			]
 		},
 		"addon": {
 			"type": "object",
@@ -986,41 +1053,11 @@ module.exports = {
 				"id",
 				"version"
 			]
-		},
-		"endings": {
-			"type": "object",
-			"additionalProperties": {
-				"$ref": "#/definitions/ending"
-			}
-		},
-		"telemetry": {
-			"type": "object",
-			"properties": {
-				"removeTestingFlag": {
-					"type": "boolean"
-				},
-				"send": {
-					"type": "boolean"
-				},
-				"onInvalid": {
-					"type": "string",
-					"enum": [
-						"throw",
-						"log"
-					]
-				}
-			},
-			"required": [
-				"removeTestingFlag",
-				"send"
-			]
 		}
 	},
 	"required": [
-		"studyName",
-		"endings",
-		"addon",
-		"telemetry"
+		"study",
+		"addon"
 	]
 };
 
