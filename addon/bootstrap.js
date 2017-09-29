@@ -2,10 +2,8 @@
 
 /* global  __SCRIPT_URI_SPEC__  */
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
-
 const { utils: Cu } = Components;
 Cu.import("resource://gre/modules/Console.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 //console.log("__SCRIPT_URI_SPEC__", __SCRIPT_URI_SPEC__);
@@ -17,11 +15,10 @@ const BASERESOURCE = "perception-study";
 
 XPCOMUtils.defineLazyModuleGetter(this, "studyUtils",
   `resource://${BASERESOURCE}/StudyUtils.jsm`);
-XPCOMUtils.defineLazyModuleGetter(this, "Feature",
+XPCOMUtils.defineLazyModuleGetter(this, "feature",
   `resource://${BASERESOURCE}/lib/Feature.jsm`);
 XPCOMUtils.defineLazyModuleGetter(this, "config",
   `resource://${BASERESOURCE}/Config.jsm`);
-
 
 //const CONFIGPATH = `${__SCRIPT_URI_SPEC__}/../Config.jsm`;
 //const { config } = Cu.import(CONFIGPATH, {});
@@ -45,7 +42,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "config",
 async function startup(addonData, reason) {
   // addonData: Array [ "id", "version", "installPath", "resourceURI", "instanceID", "webExtension" ]  bootstrap.js:48
   console.log("startup", studyUtils.REASONS[reason] || reason);
-
   // setup the studyUtils so that Telemetry is valid
   studyUtils.setup({
     ...config,
@@ -59,7 +55,6 @@ async function startup(addonData, reason) {
     )
   );
   studyUtils.setVariation(variation);
-
 
   // addon_install:  note first seen, check eligible
   if ((studyUtils.REASONS[reason]) === "ADDON_INSTALL") {
@@ -98,9 +93,6 @@ async function startup(addonData, reason) {
 
     });
   }
-
-  console.log(new Feature().startup());
-
 }
 
 
@@ -150,4 +142,3 @@ function install(addonData, reason) {
 //  L.level = Log.Level[levelWord] || Log.Level.Debug; // should be a config / pref
 //  return L;
 // }
-
