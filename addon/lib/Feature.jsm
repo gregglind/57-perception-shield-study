@@ -1,7 +1,15 @@
 "use strict";
 
+
+const { utils: Cu } = Components;
+Cu.import("resource://gre/modules/Console.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+
+
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(EXPORTED_SYMBOLS|Feature)" }]*/
 const EXPORTED_SYMBOLS = this.EXPORTED_SYMBOLS = ["Feature"];
+
 
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
   "resource:///modules/RecentWindow.jsm");
@@ -10,9 +18,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
 class Feature {
   startup(config) {
     console.log(`Starting the thing with ${config}`);
+    return "started";
   }
   shutdown () {
-    console.log('shutting down feature')
+    console.log('shutting down feature');
+    return "shutdown";
+
   }
 }
 
