@@ -93,6 +93,8 @@ async function startup(addonData, reason) {
 
     });
   }
+  
+  feature.startup(variation.name);
 }
 
 

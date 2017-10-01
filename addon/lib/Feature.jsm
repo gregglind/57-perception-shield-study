@@ -16,20 +16,58 @@ XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
   "resource:///modules/RecentWindow.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "config",
   `resource://${BASERESOURCE}/Config.jsm`);
+XPCOMUtils.defineLazyModuleGetter(this, "studyUtils",
+  `resource://${BASERESOURCE}/StudyUtils.jsm`);
 
 class Feature {
   constructor() {
     this.notificationBar = new Notification();
+    this.TREATMENTS = {
+      control() {
+        // TODO glind: add control treatment
+      },
+      notification() {
+        const recentWindow = this.getMostRecentBrowserWindow();
+        if (recentWindow && recentWindow.gBrowser) {
+          this.notificationBar.show(recentWindow.document, () => {
+            // TODO bdanforth: add callback for what to do if user clicks on 'accept button'
+            console.log("Doing a thing after button accept click!");
+            // TODO glind: send correct telemetry when user clicks on button
+            studyUtils.telemetry({ event: "engagedPrompt" });
+          }, () => {
+            // TODO bdanforth: add callback for what to do if user clicks on 'reject button'
+            console.log("Doing a thing after button reject click!");
+            // TODO glind: send correct telemetry when user clicks on button
+            studyUtils.telemetry({ event: "engagedPrompt" });
+          });
+        }
+        // TODO glind: send correct telemetry when user is prompted with notification bar
+        studyUtils.telemetry({ event: "prompted"});
+      },
+      otherTreatment() {
+        // TODO glind: add other treatment(s) as needed.
+      },
+    };
   }
 
-  startup() {
-    console.log(`Starting the thing with ${config}`);
-    return "started";
+  startup(variation) {
+    if (variation in this.TREATMENTS) {
+      this.TREATMENTS[variation].call(this);
+      return "started";
+    }
+    return `Error: ${variation} not a valid treatment name.`;
   }
 
   shutdown() {
     console.log("shutting down feature");
     return "shutdown";
+  }
+
+  getMostRecentBrowserWindow() {
+    return RecentWindow.getMostRecentBrowserWindow({
+      private: false,
+      allowPopups: false,
+    });
   }
 }
 
@@ -40,7 +78,7 @@ class Notification {
     this.notice = null;
     this.notificationBox = null;
   }
-  show(doc, onClickButtonCallback) {
+  show(doc, onClickButtonAcceptCallback, onClickButtonRejectCallback) {
 
     // only one at a time is allowed
     if (this.notice && this.notificationBox) {
@@ -51,8 +89,8 @@ class Notification {
       }
     }
 
-    this.notifictionBox = doc.querySelector(
-      "#high-priority-global-notificationbox",
+    this.notificationBox = doc.querySelector(
+      "#high-priority-global-notificationbox"
     );
 
     this.notice = this.notificationBox.appendNotification(
@@ -60,10 +98,18 @@ class Notification {
       `${BASERESOURCE}`,
       `resource://${BASERESOURCE}/skin/heartbeat-icon.svg`,
       this.notificationBox.PRIORITY_INFO_HIGH,
-      [{
-        label: "Tell me more",
-        callback: onClickButtonCallback,
-      }],
+      [
+        {
+          // TODO glind: Change label as needed
+          label: "Accept button",
+          callback: onClickButtonAcceptCallback,
+        },
+        {
+          // TODO glind: Change label as needed
+          label: "Reject button",
+          callback: onClickButtonRejectCallback,
+        },
+      ],
       (eventType) => {
         if (eventType === "removed") {
           // Send ping about removing the study?
@@ -93,15 +139,7 @@ class Notification {
     messageText.flex = 0;
     messageText.nextSibling.flex = 0;
   }
-
-  getMostRecentBrowserWindow() {
-    return RecentWindow.getMostRecentBrowserWindow({
-      private: false,
-      allowPopups: false,
-    });
-  }
 }
-
 
 /*
 const TREATMENTS = {
@@ -165,6 +203,17 @@ const TREATMENTS = {
   },
 };
 */
+
+async function getAllTelemetry() {
+  // TODO glind: add telemetry methods and call this function from somewhere
+  return [{}, {}];
+}
+
+async function summarizeTelemetry() {
+  // TODO glind: add telemetry methods and call this function from somewhere
+  let answer = {};
+  return answer;
+}
 
 // Actually create the singleton.
 var feature = new Feature();

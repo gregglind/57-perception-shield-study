@@ -11,11 +11,14 @@
 var EXPORTED_SYMBOLS = ["config"];
 
 var config = {
+  // TODO glind: Update notification message as needed
+  notificationMessage: "Please help us improve Firefox and the Web.",
   "study": {
     "studyName": "mostImportantExperiment", // no spaces, for all the reasons
     "forceVariation": {
-      "name": "kittens",
+      "name": "notification",
     }, // optional, use to override/decide
+    // TODO glind: Add additional variations and weights.
     "weightedVariations": [
       {"name": "control",
         "weight": 1},
