@@ -20,10 +20,9 @@ class Feature {
     console.log(`Starting the thing with ${config}`);
     return "started";
   }
-  shutdown () {
-    console.log('shutting down feature');
+  shutdown() {
+    console.log("shutting down feature");
     return "shutdown";
-
   }
 }
 
@@ -35,7 +34,7 @@ class Notification {
     this.notificationBox = null;
   }
   show(doc, onClickButtonCallback) {
-    let { notice, notificationBox} = this
+    let { notice, notificationBox} = this;
 
     // only one at a time is allowed
     if (notice && notificationBox) {
@@ -158,12 +157,12 @@ const TREATMENTS = {
 */
 
 
-async function getAllTelemetry () {
- return [{}, {}]
+async function getAllTelemetry() {
+  return [{}, {}];
 }
 
-async function summarizeTelemetry () {
-  let answer = {};
+async function summarizeTelemetry() {
+  const answer = {};
   return answer;
 }
 
