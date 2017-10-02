@@ -10,30 +10,69 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(EXPORTED_SYMBOLS|Feature)" }]*/
 const EXPORTED_SYMBOLS = this.EXPORTED_SYMBOLS = ["Feature"];
 
-
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
   "resource:///modules/RecentWindow.jsm");
 
 
+const BASERESOURCE = "perception-study";
+XPCOMUtils.defineLazyModuleGetter(this, "studyUtils",
+  `resource://${BASERESOURCE}/StudyUtils.jsm`);
+
+
+// window utilities
+function getMostRecentBrowserWindow() {
+  return RecentWindow.getMostRecentBrowserWindow({
+    private: false,
+    allowPopups: false,
+  });
+}
+
+/* TODO, glind Exports as class, not instance */
 class Feature {
-  startup(config) {
+  constructor(config) {
+    this.config = config;
+    this.ui = new Notification();
     console.log(`Starting the thing with ${config}`);
+    // configure the ui / treatment
     return "started";
   }
   shutdown() {
+    // TODO, nothing to do here, really.
     console.log("shutting down feature");
     return "shutdown";
   }
+
+  showUI() {
+    const config = this.config;
+    const recentWindow = getMostRecentBrowserWindow();
+    if (recentWindow && recentWindow.gBrowser) {
+      // TODO glind promptType
+      studyUtils.telemetry({ event: "prompted", promptType });
+      this.ui.show(
+        recentWindow.document,
+        config, // msg text, etc.
+        function onClickButtonCallback() {
+          console.log("clicked!");
+          // recentWindow.gBrowser.loadOneTab("about:pioneer", {
+          //  inBackground: false,
+          studyUtils.telemetry({ event: "engagedPrompt" });
+        }
+      );
+    }
+  }
 }
+
 
 class Notification {
   // functions related to notification box
-  constructor(props) {
+  constructor() {
     // state
     this.notice = null;
     this.notificationBox = null;
   }
-  show(doc, onClickButtonCallback) {
+  show(doc, config, onClickButtonCallback) {
+    // doc: a chrome doc
+    // config:  notificationMessage,
     let { notice, notificationBox} = this;
 
     // only one at a time is allowed
@@ -47,11 +86,11 @@ class Notification {
 
     notice = this.notice = notificationBox.appendNotification(
       config.notificationMessage,
-      "pioneer-enrollment-study-1",
-      "resource://pioneer-enrollment-study/skin/heartbeat-icon.svg",
+      "pioneer-enrollment-study-1", // TODO glind
+      "resource://pioneer-enrollment-study/skin/heartbeat-icon.svg", // TODO glind
       notificationBox.PRIORITY_INFO_HIGH,
       [{
-        label: "Tell me more",
+        label: "Tell me more",  // TODO glind
         callback: onClickButtonCallback,
       }],
       (eventType) => {
@@ -61,6 +100,7 @@ class Notification {
       },
     );
 
+    // from Pioneer-enrollment-study
     // Minimal attempts to style the notification like Heartbeat
     notice.style.background = "linear-gradient(-179deg, #FBFBFB 0%, #EBEBEB 100%)";
     notice.style.borderBottom = "1px solid #C1C1C1";
@@ -82,13 +122,6 @@ class Notification {
     notice.appendChild(rightSpacer);
     messageText.flex = 0;
     messageText.nextSibling.flex = 0;
-  }
-
-  getMostRecentBrowserWindow() {
-    return RecentWindow.getMostRecentBrowserWindow({
-      private: false,
-      allowPopups: false,
-    });
   }
 }
 
