@@ -11,7 +11,6 @@
 console.log("Starting up firefox");
 const utils = require("./test/utils");
 const firefox = require("selenium-webdriver/firefox");
-
 const Context = firefox.Context;
 
 (async() => {

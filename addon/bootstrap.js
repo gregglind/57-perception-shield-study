@@ -1,6 +1,6 @@
 "use strict";
 
-/* global  __SCRIPT_URI_SPEC__, feature, studyUtils, config */
+/* global  __SCRIPT_URI_SPEC__, Feature, studyUtils, config */
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
 
 // https://dxr.mozilla.org/mozilla-central/source/toolkit/mozapps/extensions/internal/XPIProvider.jsm#4335-4353
@@ -93,7 +93,10 @@ async function startup(addonData, reason) {
     });
   }
 
-  console.log(new Feature().startup());
+  // just fire this, then done.
+  console.log(new Feature(variation).start());
+  // also set a time to handle "long expiration"
+  // TODO glind
 
 }
 

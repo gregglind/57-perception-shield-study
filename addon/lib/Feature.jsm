@@ -1,13 +1,13 @@
 "use strict";
 
+/* global studyUtils */
+/* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(EXPORTED_SYMBOLS|Feature)" }]*/
 
 const { utils: Cu } = Components;
 Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-
-/* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(EXPORTED_SYMBOLS|Feature)" }]*/
 const EXPORTED_SYMBOLS = this.EXPORTED_SYMBOLS = ["Feature"];
 
 XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
@@ -34,15 +34,15 @@ class Feature {
     this.ui = new Notification();
     console.log(`Starting the thing with ${config}`);
     // configure the ui / treatment
-    return "started";
   }
-  shutdown() {
-    // TODO, nothing to do here, really.
-    console.log("shutting down feature");
-    return "shutdown";
-  }
+  // shutdown() {
+  //   // TODO, nothing to do here, really.
+  //   console.log("shutting down feature");
+  //   return "shutdown";
+  // }
 
-  showUI() {
+  start() {
+    const promptType = "notificationBox-strings-1";
     const config = this.config;
     const recentWindow = getMostRecentBrowserWindow();
     if (recentWindow && recentWindow.gBrowser) {
@@ -62,7 +62,6 @@ class Feature {
   }
 }
 
-
 class Notification {
   // functions related to notification box
   constructor() {
@@ -70,7 +69,7 @@ class Notification {
     this.notice = null;
     this.notificationBox = null;
   }
-  show(doc, config, onClickButtonCallback) {
+  show(doc, config) {
     // doc: a chrome doc
     // config:  notificationMessage,
     let { notice, notificationBox} = this;
@@ -84,18 +83,43 @@ class Notification {
       "#high-priority-global-notificationbox",
     );
 
+    const yesFirst = Number(Math.random() > .5);
+
+    const packet = {
+      event: "answered",
+      yesFirst, "" + yesFirst  // must be string.
+
+    };
+
+
+    var buttons = [{
+      label: "yes",
+      callback:  () => sendScorePacket({...packet, score: "1", label: "yes"}),
+    },
+    {
+      label: "not sure",
+      callback:  () => sendScorePacket({...packet, score: "0", label: "not sure"}),
+    },
+    {
+      label: "no",
+      callback:  () => sendScorePacket({...packet, score: "-1", label: "no"}),
+    },
+    ];
+
+    if (!yesFirst) {
+      buttons.reverse();
+    }
+
     notice = this.notice = notificationBox.appendNotification(
-      config.notificationMessage,
-      "pioneer-enrollment-study-1", // TODO glind
-      "resource://pioneer-enrollment-study/skin/heartbeat-icon.svg", // TODO glind
+      config.message,
+      "57-engagement",
+      `resource://${BASERESOURCE}/skin/heartbeat-icon.svg`, // TODO glind
       notificationBox.PRIORITY_INFO_HIGH,
-      [{
-        label: "Tell me more",  // TODO glind
-        callback: onClickButtonCallback,
-      }],
+      buttons, // buttons
       (eventType) => {
         if (eventType === "removed") {
           // Send ping about removing the study?
+          studyUtils.endStudy({reason: "notification-x"});
         }
       },
     );
@@ -201,7 +225,9 @@ async function summarizeTelemetry() {
 
 
 
-
+function sendScorePacket(packet) {
+  studyUtils.telemetry(packet);
+}
 
 
 
