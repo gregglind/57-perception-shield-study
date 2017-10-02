@@ -118,7 +118,7 @@ class Notification {
       (eventType) => {
         if (eventType === "removed") {
           // Send ping about removing the study?
-          studyUtils.endStudy({reason: "notification-x"});
+          studyUtils.endStudy({reason: "notification-closed"});
         }
       },
     );
