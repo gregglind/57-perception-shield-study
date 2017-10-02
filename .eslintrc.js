@@ -13,6 +13,11 @@ module.exports = {
           "experimentalObjectRestSpread": true
       }
   },
+  globals: {
+    "config": true,
+    "studyUtils": true,
+    "feature": true
+  },
   env: {
     'es6': true,
     // 'browser-window': false
