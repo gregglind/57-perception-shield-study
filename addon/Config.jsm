@@ -13,39 +13,39 @@ var EXPORTED_SYMBOLS = ["config"];
 var config = {
   "study": {
     "studyName": "57-perception-shield-study", // no spaces, for all the reasons
-    //"forceVariation": {
-    //}, // optional, use to override/decide
+    // "forceVariation": {
+    // }, // optional, use to override/decide
     "weightedVariations": [
       {
         "message": "Are you satisfied with Firefox?",
         "name": "satisfied-1",
-        "weight": 1
+        "weight": 1,
       },
       {
         "message": "Do you like Firefox?",
         "name": "like-1",
-        "weight": 1
+        "weight": 1,
       },
       {
         "message": "Would you recommend Firefox to a friend or family member?",
         "name": "recommend-1",
-        "weight": 1
+        "weight": 1,
       },
       {
         "message": "Will you keep using Firefox in the future?",
         "name": "keep-using-1",
-        "weight": 1
+        "weight": 1,
       },
       {
         "message": "Is Firefox performing up to your expectations?",
         "name": "up-to-expectations-1",
-        "weight": 1
+        "weight": 1,
       },
       {
         "message": "Is Firefox is your favorite browser?",
         "name": "favorite-1",
-         "weight": 1
-     },
+        "weight": 1,
+      },
     ],
     /** **endings**
       * - keys indicate the 'endStudy' even that opens these.

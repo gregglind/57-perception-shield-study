@@ -87,10 +87,9 @@ class Notification {
 
     const packet = {
       event: "answered",
-      yesFirst, "" + yesFirst  // must be string.
+      yesFirst: "" + yesFirst,  // must be string.
 
     };
-
 
     var buttons = [{
       label: "yes",
