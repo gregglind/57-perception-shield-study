@@ -1,31 +1,24 @@
 "use strict";
 
-/* global  __SCRIPT_URI_SPEC__  */
+/* global  __SCRIPT_URI_SPEC__, Feature, studyUtils, config */
 /* eslint no-unused-vars: ["error", { "varsIgnorePattern": "(startup|shutdown|install|uninstall)" }]*/
 
+// https://dxr.mozilla.org/mozilla-central/source/toolkit/mozapps/extensions/internal/XPIProvider.jsm#4335-4353
 const { utils: Cu } = Components;
-Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-//console.log("__SCRIPT_URI_SPEC__", __SCRIPT_URI_SPEC__);
-
-//const STUDYUTILSPATH = `${__SCRIPT_URI_SPEC__}/../${studyConfig.studyUtilsPath}`;
-//const { studyUtils } = Cu.import(STUDYUTILSPATH, {});
+// console.log("__SCRIPT_URI_SPEC__", __SCRIPT_URI_SPEC__);
 
 const BASERESOURCE = "perception-study";
 
+// Learn more: https://developer.mozilla.org/en-US/docs/Mozilla/JavaScript_code_modules/XPCOMUtils.jsm#defineLazyModuleGetter()
 XPCOMUtils.defineLazyModuleGetter(this, "studyUtils",
   `resource://${BASERESOURCE}/StudyUtils.jsm`);
 XPCOMUtils.defineLazyModuleGetter(this, "Feature",
   `resource://${BASERESOURCE}/lib/Feature.jsm`);
 XPCOMUtils.defineLazyModuleGetter(this, "config",
   `resource://${BASERESOURCE}/Config.jsm`);
-
-
-//const CONFIGPATH = `${__SCRIPT_URI_SPEC__}/../Config.jsm`;
-//const { config } = Cu.import(CONFIGPATH, {});
-
 
 // var log = createLog(studyConfig.study.studyName, config.log.bootstrap.level);  // defined below.
 // log("LOG started!");
@@ -82,7 +75,7 @@ async function startup(addonData, reason) {
 
 
   // if you have code to handle expiration / long-timers, it could go here
-
+  // ANSWER glind: in this study, we are doing NO long timer experiation.
 
   // If your study has an embedded webExtension, start it.
   const webExtension = addonData.webExtension;
@@ -99,14 +92,17 @@ async function startup(addonData, reason) {
     });
   }
 
-  console.log(new Feature().startup());
-
+  // Fire this, then we are done.
+  // It will attempt ONE notification bar survey
+  new Feature(variation).start();
 }
 
 
 function shutdown(addonData, reason) {
   console.log("shutdown", studyUtils.REASONS[reason] || reason);
-  // FRAGILE: handle uninstalls initiated by USER or by addon
+  const { REASONS } = studyUtils;
+  // FRAGILE: handle uninstalls initiated by USER or by addon,
+  // BUT NOT by Normandy 'uninstall'
   if (reason === REASONS.ADDON_UNINSTALL || reason === REASONS.ADDON_DISABLE) {
     console.log("uninstall or disable");
     if (!studyUtils._isEnding) {
@@ -116,13 +112,11 @@ function shutdown(addonData, reason) {
       return;
     }
     // normal shutdown, or 2nd uninstall request
-    console.log("Jsms unloading");
 
 
     // QA NOTE:  unload addon specific modules here.
-
-
     // clean up our modules.
+    console.log("Jsms unloading");
     Cu.unload(`resource://${BASERESOURCE}/StudyUtils.jsm`);
     Cu.unload(`resource://${BASERESOURCE}/Config.jsm`);
     Cu.unload(`resource://${BASERESOURCE}/lib/Feature.jsm`);
@@ -135,7 +129,7 @@ function uninstall(addonData, reason) {
 }
 
 function install(addonData, reason) {
-  // TODO resource paths aren't avaiable yet
+  // TODO resource paths aren't avaiable yet, so studyUtils isn't.
   console.log("install", reason);
   // handle ADDON_UPGRADE (if needful) here
 }
@@ -144,10 +138,10 @@ function install(addonData, reason) {
 
 // logging
 // function createLog(name, levelWord) {
-//  Cu.import("resource://gre/modules/Log.jsm");
-//  var L = Log.repository.getLogger(name);
-//  L.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
-//  L.level = Log.Level[levelWord] || Log.Level.Debug; // should be a config / pref
-//  return L;
+//   Cu.import("resource://gre/modules/Log.jsm");
+//   var L = Log.repository.getLogger(name);
+//   L.addAppender(new Log.ConsoleAppender(new Log.BasicFormatter()));
+//   L.level = Log.Level[levelWord] || Log.Level.Debug; // should be a config / pref
+//   return L;
 // }
 
