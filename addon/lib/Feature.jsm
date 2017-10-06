@@ -81,15 +81,16 @@ class Notification {
     // to check if order biases response
     const yesFirst = Number(Math.random() > .5);
 
-    const basePacket = {
+    const baseVotePacket = {
       event: "answered",
       yesFirst: "" + yesFirst,  // must be string.
-
+      score: null,
+      label: null,
     };
 
     var onVoted = (fields) => {
       this.voted = true;
-      studyUtils.telemetry({...basePacket, ...fields});
+      studyUtils.telemetry({...baseVotePacket, ...fields});
     };
 
     // buttons and callbacks:
@@ -172,16 +173,5 @@ class Notification {
     notice.appendChild(rightSpacer);
     messageText.flex = 0;
     messageText.nextSibling.flex = 0;
-
   }
 }
-
-async function getAllTelemetry() {
-  return [{}, {}];
-}
-
-async function summarizeTelemetry() {
-  const answer = {};
-  return answer;
-}
-
