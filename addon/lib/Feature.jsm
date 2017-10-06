@@ -34,7 +34,7 @@ class Feature {
   start() {
     // future-proof analysis if we change the look / style to icons
     const promptType = "notificationBox-strings-1";
-    const config = this.config;
+    const config = {...this.config, promptType,};
     const recentWindow = getMostRecentBrowserWindow();
 
     if (recentWindow && recentWindow.gBrowser) {
@@ -82,10 +82,13 @@ class Notification {
     const yesFirst = Number(Math.random() > .5);
 
     const baseVotePacket = {
+      promptType: config.promptType,
       event: "answered",
       yesFirst: "" + yesFirst,  // must be string.
       score: null,
       label: null,
+      branch: config.name,
+      message: config.message
     };
 
     var onVoted = (fields) => {
@@ -147,6 +150,10 @@ class Notification {
       if (this.voted || this.xclicked) return false;
       return studyUtils.endStudy({reason: "window-or-fx-closed"});
     });
+
+    // append on the study info, so that we can use it for testing
+    notice.setAttribute('data-study-config', JSON.stringify(config));
+
 
     // Minimal attempts to style the notification like Heartbeat
     // from Pioneer-enrollment-study

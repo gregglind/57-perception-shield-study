@@ -26,7 +26,7 @@ const FIREFOX_PREFERENCES = {
   "devtools.chrome.enabled": true,
   "devtools.debugger.remote-enabled": true,
   "devtools.debugger.prompt-connection": false,
-  "general.warnOnAboutConfig": false
+  "general.warnOnAboutConfig": false,
 
   // also of interest, gecko webdriver sets many prefs at:
   // https://dxr.mozilla.org/mozilla-central/source/testing/geckodriver/src/prefs.rs
@@ -68,7 +68,7 @@ module.exports.promiseSetupDriver = async() => {
   await options.setBinary(new firefox.Binary(binaryLocation));
   const driver = await builder.build();
   driver.setContext(Context.CHROME);
-  debugger;
+
   return driver;
 };
 
@@ -89,7 +89,7 @@ const MODIFIER = (function getModifierKey() {
 /* Firefox UI helper functions */
 
 // such as:  "social-share-button"
-module.exports.addButtonFromCustomizePanel = async (driver, buttonId) =>
+module.exports.addButtonFromCustomizePanel = async(driver, buttonId) =>
   driver.executeAsyncScript((callback) => {
     // see https://dxr.mozilla.org/mozilla-central/rev/211d4dd61025c0a40caea7a54c9066e051bdde8c/browser/base/content/browser-social.js#193
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
@@ -97,10 +97,10 @@ module.exports.addButtonFromCustomizePanel = async (driver, buttonId) =>
     callback();
   });
 
-module.exports.removeButtonFromNavbar= async (driver, buttonId) => {
+module.exports.removeButtonFromNavbar = async(driver, buttonId) => {
   try {
     await driver.executeAsyncScript((callback) => {
-      Components.utils.import('resource:///modules/CustomizableUI.jsm');
+      Components.utils.import("resource:///modules/CustomizableUI.jsm");
       CustomizableUI.removeWidgetFromArea(buttonId);
       callback();
     });
@@ -141,12 +141,45 @@ module.exports.uninstallAddon = async(driver, id) => {
   await executor.execute(uninstallCmd);
 };
 
+
+/* this is NOT WORKING FOR UNKNOWN HARD TO EXLAIN REASONS
+=> Uncaught WebDriverError: InternalError: too much recursion
+module.exports.allAddons = async(driver) => {
+  // callback is how you get the return back from the script
+  return driver.executeAsyncScript(async(callback,) => {
+    Components.utils.import("resource://gre/modules/AddonManager.jsm");
+    const L = await AddonManager.getAllAddons();
+    callback(await L);
+  });
+};
+*/
+
+module.exports.getTelemetryPings = async(driver, options) => {
+  // callback is how you get the return back from the script
+  return driver.executeAsyncScript(async(options, callback) => {
+    const {type, n, timestamp, headersOnly} = options;
+    Components.utils.import("resource://gre/modules/TelemetryArchive.jsm");
+    // {type, id, timestampCreated}
+    let pings = await TelemetryArchive.promiseArchivedPingList();
+    if (type) pings = pings.filter(p => p.type === type);
+    if (timestamp) pings = pings.filter(p => p.timestampCreated > timestamp);
+
+    pings.sort((a, b) => b.timestampCreated - a.timestampCreated);
+    if (n) pings = pings.slice(0, n);
+    const pingData = headersOnly ? pings : pings.map(ping => TelemetryArchive.promiseArchivedPingById(ping.id));
+
+    callback(await Promise.all(pingData));
+  }, options);
+};
+
+
+
+
 // TODO glind, this interface feels janky
 // this feels like it wants to be $ like.
 // not obvious right now, moving on!
 class getChromeElementBy {
-  static async _get1 (driver, method, selector ) {
-    let methods = ['id', 'className'];
+  static async _get1(driver, method, selector ) {
     driver.setContext(Context.CHROME);
     try {
       return await driver.wait(until.elementLocated(
@@ -157,18 +190,16 @@ class getChromeElementBy {
       return null;
     }
   }
-  static async id (driver, id) {
-    return this._get1(driver, 'id', id);
-  }
+  static async id(driver, id) { return this._get1(driver, "id", id); }
 
-  static async className (driver, className) {
-    return this._get1(driver, 'className', className);
-  }
+  static async className(driver, className) { return this._get1(driver, "className", className); }
+
+  static async tagName(driver, tagName) { return this._get1(driver, "tagName", tagName); }
 }
 module.exports.getChromeElementBy = getChromeElementBy;
 
 
-module.exports.takeScreenshot = async(driver, filepath='./screenshot.png') => {
+module.exports.takeScreenshot = async(driver, filepath = "./screenshot.png") => {
   try {
     const data = await driver.takeScreenshot();
     return await Fs.outputFile(filepath,
@@ -177,27 +208,6 @@ module.exports.takeScreenshot = async(driver, filepath='./screenshot.png') => {
     throw screenshotError;
   }
 };
-
-// Returns array of pings of type `type` in sorted order by timestamp
-// first element is most recent ping
-module.exports.getTelemetryPings = async(driver, options) => {
-  // callback is how you get the return back from the script
-  driver.executeAsyncScript(async(options, callback) => {
-    const {type, n, timestamp, headersOnly} = options;
-    Components.utils.import("resource://gre/modules/TelemetryArchive.jsm");
-    // {type, id, timestampCreated}
-    let pings = await TelemetryArchive.promiseArchivedPingList();
-    if (type) pings = pings.filter(p => p.type === type);
-    if (timestamp) pings = pings.filter(p => p.timestampCreated > timestamp);
-
-    pings.sort((a, b) => b.timestampCreated - a.timestampCreated);
-    if (n) pings = pings.slice(0, n);
-
-    const pingData = headersOnly ? pings : pings.map(ping => TelemetryArchive.promiseArchivedPingById(ping.id));
-
-    callback(await Promise.all(pingData));
-  }, options);
-}
 
 module.exports.gotoURL = async(driver, url) => {
   // navigate to a regular page
@@ -249,7 +259,7 @@ module.exports.searchTelemetry = (conditionArray, telemetryArray) => {
 //   return { hasClass, hasColor };
 // };
 
-//module.exports.waitForClassAdded = async(driver) => {
+// module.exports.waitForClassAdded = async(driver) => {
 //  try {
 //    const animationTest = await driver.wait(async() => {
 //      const { hasClass } = await module.exports.testAnimation(driver);
@@ -260,9 +270,9 @@ module.exports.searchTelemetry = (conditionArray, telemetryArray) => {
 //    if (e.name === "TimeoutError") { return null; }
 //    throw (e);
 //  }
-//};
+// };
 //
-//module.exports.waitForAnimationEnd = async(driver) => {
+// module.exports.waitForAnimationEnd = async(driver) => {
 //  try {
 //    return await driver.wait(async() => {
 //      const { hasClass, hasColor } = await module.exports.testAnimation(driver);
@@ -272,7 +282,7 @@ module.exports.searchTelemetry = (conditionArray, telemetryArray) => {
 //    if (e.name === "TimeoutError") { return null; }
 //    throw (e);
 //  }
-//};
+// };
 
 
 // module.exports.testPanel = async(driver, panelId) => {
