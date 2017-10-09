@@ -8,7 +8,7 @@
 - *clicking on the left-most button presented*.
 - verifying that sent Telemetry is correct.
 
-Code at `test/functional_test.js`.
+Code at [./test/functional_test.js].
 
 ## Manual / QA TEST Instructions
 
@@ -43,7 +43,7 @@ All UI `shield-study` `study_state` sequences look like this:
 1.  UI APPEARANCE.  OBSERVE a notification bar with these traits:
 
     *  Icon is 'heartbeat'
-    *  Text is one of 8 selected "questions", such as:  "Do you like Firefox?".  These are listed in `addon/Config.jsm` as the variable `weightedVariations`.
+    *  Text is one of 8 selected "questions", such as:  "Do you like Firefox?".  These are listed in [./addon/Config.jsm] as the variable `weightedVariations`.
     *  clickable buttons with labels 'yes | not sure | no'  OR 'no | not sure | yes' (50/50 chance of each)
     *  an `x` button at the right that closes the notice.
 

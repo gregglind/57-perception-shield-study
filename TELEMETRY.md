@@ -6,8 +6,6 @@
 - Respects telemetry preferences.  If user has disabled telemetry, no telemetry will be sent.
 
 
-
-
 ## `shield-study` pings (common to all shield-studies)
 
 `shield-studies-addon-utils` sends the usual packets.
@@ -19,116 +17,66 @@ The STUDY SPECIFIC ENDINGS this study supports are:
 - "window-or-fx-closed"
 
 
-
 ## `shield-study-addon` pings, specific to THIS study.
 
-Two kinds of events are instrumented in this study.
+Events instrumented in this study:
 
 - UI
+    - prompted (notification bar is shown)
+
+- Interactions
+    - voted
 
 
-- VOTES
+## Example sequence for a 'voted => not sure' interaction
 
-
-
-## Example Ping Sequence
-
-Presented as split by bucket, but these occur intermixed.
+These are the `payload` fields from all pings in the `shield-study` and `shield-study-addon` buckets.
 
 ```
-// shield-study
-[
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study",
-    "data": {
-      "study_state": "enter"
-    },
-    "testing": true
-  },
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study",
-    "data": {
-      "study_state": "installed"
-    },
-    "testing": true
-  },
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study",
-    "data": {
-      "study_state": "ended-neutral",
-      "study_state_fullname": "voted"
-    },
-    "testing": true
-  },
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study",
-    "data": {
-      "study_state": "exit"
-    },
-    "testing": true
-  }
-]
-// shield-study-addon
 
+// common fields
 
-[
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study-addon",
-    "data": {
-      "attributes": {
-        "event": "prompted",
-        "promptType": "notificationBox-strings-1"
-      }
-    },
-    "testing": true
-  },
-  {
-    "version": 3,
-    "study_name": "57-perception-shield-study",
-    "branch": "up-to-expectations-1",
-    "addon_version": "1.0.0",
-    "shield_version": "4.1.0",
-    "type": "shield-study-addon",
-    "data": {
-      "attributes": {
-        "promptType": "notificationBox-strings-1",
-        "event": "answered",
-        "yesFirst": "1",
-        "score": "0",
-        "label": "not sure",
-        "branch": "up-to-expectations-1",
-        "message": "Is Firefox performing up to your expectations?"
-      }
-    },
-    "testing": true
+branch        up-to-expectations-1        // should describe Question text
+study_name    57-perception-shield-study
+addon_version 1.0.0
+version       3
+
+2017-10-09T14:16:18.042Z shield-study
+{
+  "study_state": "enter"
+}
+2017-10-09T14:16:18.055Z shield-study
+{
+  "study_state": "installed"
+}
+2017-10-09T14:16:18.066Z shield-study-addon
+{
+  "attributes": {
+    "event": "prompted",
+    "promptType": "notificationBox-strings-1"
   }
-]
+}
+2017-10-09T16:29:44.109Z shield-study-addon
+{
+  "attributes": {
+    "promptType": "notificationBox-strings-1",
+    "event": "answered",
+    "yesFirst": "1",
+    "score": "0",
+    "label": "not sure",
+    "branch": "up-to-expectations-1",
+    "message": "Is Firefox performing up to your expectations?"
+  }
+}
+2017-10-09T16:29:44.188Z shield-study
+{
+  "study_state": "ended-neutral",
+  "study_state_fullname": "voted"
+}
+2017-10-09T16:29:44.191Z shield-study
+{
+  "study_state": "exit"
+}
 ```
-
 
 
