@@ -10,13 +10,11 @@
 
 Code at `test/functional_test.js`.
 
-
 ## Manual / QA TEST Instructions
 
 Assumptions / Thoughts
 
 1.  Please ask if you want  more command-line tools to do this testing.
-
 
 ### BEFORE EACH TEST: INSTALL THE ADDON to a CLEAN (NEW) PROFILE
 
@@ -27,7 +25,7 @@ Assumptions / Thoughts
 As an alternative (command line) cli method:
 
 1. `git clone` the directory.
-2. `npm run firefox` from the Github (source) directory.
+2. `npm install` then `npm run firefox` from the Github (source) directory.
 
 
 ### Note: checking "Correct Pings"
@@ -36,72 +34,90 @@ All interactions with the UI create sequences of Telemetry Pings.
 
 All UI `shield-study` `study_state` sequences look like this:
 
-- `enter => install => (an ending) => exit`.
+- `enter => install => (one of: "voted" | "notification-x" |  "window-or-fx-closed") => exit`.
 
+(Note: this is complicated to explain, so please ask questions and I will try to write it up better!, see `TELMETRY.md` and EXAMPLE SEQUENCE below.)
 
 ### Do these tests.
 
-1.  UI APPEARANCE.  OBSERVE a notification bar like this:
+1.  UI APPEARANCE.  OBSERVE a notification bar with these traits:
 
-    a.  Icon is 'heartbeat'
-    b.  Text is one of 8 selected "questions", such as:  "Do you like Firefox?".  These are listed in `addon/Config.jsm` as `weightedVariations`.
-    c.  buttons for click or 'yes | not sure | no'  OR 'no | not sure | yes'
-    d.  an `x` button that closes the bar
+    *  Icon is 'heartbeat'
+    *  Text is one of 8 selected "questions", such as:  "Do you like Firefox?".  These are listed in `addon/Config.jsm` as the variable `weightedVariations`.
+    *  clickable buttons with labels 'yes | not sure | no'  OR 'no | not sure | yes' (50/50 chance of each)
+    *  an `x` button at the right that closes the notice.
+
+    Test fails IF:
+
+    - there is no bar.
+    - elements are not correct or are not displayed
 
 
 2.  UI functionality: VOTE
 
-    Click on a 'vote' button (yes | not sure | no) has these effects
+    Expect:  Click on a 'vote' button (any of: `yes | not sure | no`) has all these effects
 
-    - bar closes
+    - notice closes
     - addon uninstalls
     - no additional tabs open
-    - telemetry pings are 'correct'
+    - telemetry pings are 'correct' with this SPECIFIC `study_state` as the ending
 
-        - ending with be `voted`
+        - ending is `voted`
+        - 'vote' is correct.
 
-3.  UI functionality: 'X'
+3.  UI functionality: 'X' button
 
     Click on the 'x' button.
 
-    - bar closes
+    - notice closes
     - addon uninstalls
     - no additional tabs open
-    - telemetry pings are 'correct'
+    - telemetry pings are 'correct' with this SPECIFIC ending
 
-      - ending will be `notification-x`
+      - ending is `notification-x`
 
 4.  UI functionality  'close window'
 
-    Open a 2nd firefox window.  Then close the initial window.
+    1.  Open a 2nd firefox window.
+    2.  Close the initial window.
 
-    - bar closes
+    Then observe:
+
+    - notice closes
     - addon uninstalls
     - no additional tabs open
-    - telemetry pings are 'correct'
+    - telemetry pings are 'correct' with this SPECIFIC ending
 
-      - ending will be `window-or-fx-closed`
-
+      - ending is `window-or-fx-closed`
 
 
 ---
 ## Helper code and tips
 
-### ***Chrome privileged console***
+### ***To open a Chrome privileged console***
+
 1.  `about:addons`
 2.  `Tools > web developer console`
+
+Or use other methods, like Scratchpad.
 
 
 ### **Telemetry Ping Printing Helper Code**
 
-```
+```javascript
 async function printPings() {
   async function getTelemetryPings (options) {
+    // type is String or Array
     const {type, n, timestamp, headersOnly} = options;
     Components.utils.import("resource://gre/modules/TelemetryArchive.jsm");
     // {type, id, timestampCreated}
     let pings = await TelemetryArchive.promiseArchivedPingList();
-    if (type) pings = pings.filter(p => p.type === type);
+    if (type) {
+      if (!(type instanceof Array)) {
+        type = [type];  // Array-ify if it's a string
+      }
+    }
+    if (type) pings = pings.filter(p => type.includes(p.type));
     if (timestamp) pings = pings.filter(p => p.timestampCreated > timestamp);
 
     pings.sort((a, b) => b.timestampCreated - a.timestampCreated);
@@ -111,25 +127,81 @@ async function printPings() {
   }
   async function getPings() {
     const ar = ["shield-study", "shield-study-addon"];
-    const out = {};
-    out["shield-study"] = await getTelemetryPings({type: "shield-study"});
-    out["shield-study-addon"] = await getTelemetryPings({type: "shield-study-addon"});
-    return out;
+    return getTelemetryPings({type: ["shield-study", "shield-study-addon"]});
   }
-  const pings = await getPings();
 
-  function display(pingsArray) {
-    const payloads = pingsArray.map(x => x.payload).reverse();
-    console.log(JSON.stringify(payloads,null,2))
-  }
-  console.log("// shield-study");
-  display(pings['shield-study'])
+  const pings = (await getPings()).reverse();
+  const p0 = pings[0].payload;
+  // print common fields
+  console.log(
+    `
+// common fields
 
-  console.log("// shield-study-addon");
-  display(pings['shield-study-addon'])
+branch        ${p0.branch}        // should describe Question text
+study_name    ${p0.study_name}
+addon_version ${p0.addon_version}
+version       ${p0.version}
 
+    `
+  )
+
+  pings.forEach(p=>{
+    console.log(p.creationDate, p.payload.type);
+    console.log(JSON.stringify(p.payload.data,null,2))
+  })
 }
 
 printPings()
 
+```
+
+
+### Example sequence for a 'voted => not sure' interaction
+
+```
+
+// common fields
+
+branch        up-to-expectations-1        // should describe Question text
+study_name    57-perception-shield-study
+addon_version 1.0.0
+version       3
+
+
+2017-10-09T14:16:18.042Z shield-study
+{
+  "study_state": "enter"
+}
+2017-10-09T14:16:18.055Z shield-study
+{
+  "study_state": "installed"
+}
+2017-10-09T14:16:18.066Z shield-study-addon
+{
+  "attributes": {
+    "event": "prompted",
+    "promptType": "notificationBox-strings-1"
+  }
+}
+2017-10-09T16:29:44.109Z shield-study-addon
+{
+  "attributes": {
+    "promptType": "notificationBox-strings-1",
+    "event": "answered",
+    "yesFirst": "1",
+    "score": "0",
+    "label": "not sure",
+    "branch": "up-to-expectations-1",
+    "message": "Is Firefox performing up to your expectations?"
+  }
+}
+2017-10-09T16:29:44.188Z shield-study
+{
+  "study_state": "ended-neutral",
+  "study_state_fullname": "voted"
+}
+2017-10-09T16:29:44.191Z shield-study
+{
+  "study_state": "exit"
+}
 ```

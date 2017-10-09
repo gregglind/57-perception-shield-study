@@ -167,8 +167,4 @@ describe.only("notification bar", function() {
     assert.equal(payloads[0].branch, noticeConfig.name);
 
   });
-
-  it("'x' button should kill study and do right telemetry", async()=>{
-
-  })
 });

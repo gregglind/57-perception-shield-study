@@ -43,8 +43,8 @@ class Feature {
         recentWindow,
         config,
       );
-
     }
+    // the 'else' here could kill the study, NOT IMPLEMENTED
   }
 }
 

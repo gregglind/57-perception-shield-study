@@ -28,7 +28,7 @@ const FIREFOX_PREFERENCES = {
   "devtools.debugger.prompt-connection": false,
   "general.warnOnAboutConfig": false,
 
-  // also of interest, gecko webdriver sets many prefs at:
+  // WARNING:  also of interest, gecko webdriver sets many prefs at:
   // https://dxr.mozilla.org/mozilla-central/source/testing/geckodriver/src/prefs.rs
   // INCLUDING
   // ("toolkit.telemetry.server", Pref::new("https://%(server)s/dummy/telemetry/")),
@@ -67,6 +67,7 @@ module.exports.promiseSetupDriver = async() => {
   const binaryLocation = await promiseActualBinary(process.env.FIREFOX_BINARY || "firefox");
   await options.setBinary(new firefox.Binary(binaryLocation));
   const driver = await builder.build();
+  // Firefox will be started up by now
   driver.setContext(Context.CHROME);
 
   return driver;
