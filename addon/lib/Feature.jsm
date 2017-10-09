@@ -34,7 +34,7 @@ class Feature {
   start() {
     // future-proof analysis if we change the look / style to icons
     const promptType = "notificationBox-strings-1";
-    const config = this.config;
+    const config = {...this.config, promptType,};
     const recentWindow = getMostRecentBrowserWindow();
 
     if (recentWindow && recentWindow.gBrowser) {
@@ -43,8 +43,8 @@ class Feature {
         recentWindow,
         config,
       );
-
     }
+    // the 'else' here could kill the study, NOT IMPLEMENTED
   }
 }
 
@@ -81,15 +81,19 @@ class Notification {
     // to check if order biases response
     const yesFirst = Number(Math.random() > .5);
 
-    const basePacket = {
+    const baseVotePacket = {
+      promptType: config.promptType,
       event: "answered",
       yesFirst: "" + yesFirst,  // must be string.
-
+      score: null,
+      label: null,
+      branch: config.name,
+      message: config.message
     };
 
     var onVoted = (fields) => {
       this.voted = true;
-      studyUtils.telemetry({...basePacket, ...fields});
+      studyUtils.telemetry({...baseVotePacket, ...fields});
     };
 
     // buttons and callbacks:
@@ -147,6 +151,10 @@ class Notification {
       return studyUtils.endStudy({reason: "window-or-fx-closed"});
     });
 
+    // append on the study info, so that we can use it for testing
+    notice.setAttribute('data-study-config', JSON.stringify(config));
+
+
     // Minimal attempts to style the notification like Heartbeat
     // from Pioneer-enrollment-study
     notice.style.background = "linear-gradient(-179deg, #FBFBFB 0%, #EBEBEB 100%)";
@@ -172,16 +180,5 @@ class Notification {
     notice.appendChild(rightSpacer);
     messageText.flex = 0;
     messageText.nextSibling.flex = 0;
-
   }
 }
-
-async function getAllTelemetry() {
-  return [{}, {}];
-}
-
-async function summarizeTelemetry() {
-  const answer = {};
-  return answer;
-}
-
