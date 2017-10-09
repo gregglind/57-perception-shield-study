@@ -2,33 +2,52 @@
 
 ## Automated Testing
 
-`npm test` does **optimistic testing** of the commonest path though the study:
+`npm test` does **optimistic testing** of the *commonest path* though the study for a user
 
-- *clicking on the first button presented*.
-- verifying correct sent Telemetry.
+- prove the notification bar ui opens
+- *clicking on the left-most button presented*.
+- verifying that sent Telemetry is correct.
 
 Code at `test/functional_test.js`.
 
 
-## Manual / QA TESTING.
+## Manual / QA TEST Instructions
 
 Assumptions / Thoughts
 
-1.  Please ask if you want  more command-line tools to debug this.
+1.  Please ask if you want  more command-line tools to do this testing.
 
 
-### BEFORE EACH TEST: INSTALL THE ADDON to a CLEAN PROFILE
+### BEFORE EACH TEST: INSTALL THE ADDON to a CLEAN (NEW) PROFILE
 
-1.  In a clean Firefox profile
+0.  (create profile:  https://developer.mozilla.org/en-US/Firefox/Multiple_profiles, or via some other method)
+1.  In your Firefox profile
 2.  `about:debugging` > `install temporary addon`
 
-### Tests
+As an alternative (command line) cli method:
+
+1. `git clone` the directory.
+2. `npm run firefox` from the Github (source) directory.
+
+
+### Note: checking "Correct Pings"
+
+All interactions with the UI create sequences of Telemetry Pings.
+
+All UI `shield-study` `study_state` sequences look like this:
+
+- `enter => install => (an ending) => exit`.
+
+
+### Do these tests.
 
 1.  UI APPEARANCE.  OBSERVE a notification bar like this:
 
     a.  Icon is 'heartbeat'
-    b.  Text is one of 8 selected
+    b.  Text is one of 8 selected "questions", such as:  "Do you like Firefox?".  These are listed in `addon/Config.jsm` as `weightedVariations`.
     c.  buttons for click or 'yes | not sure | no'  OR 'no | not sure | yes'
+    d.  an `x` button that closes the bar
+
 
 2.  UI functionality: VOTE
 
@@ -39,6 +58,8 @@ Assumptions / Thoughts
     - no additional tabs open
     - telemetry pings are 'correct'
 
+        - ending with be `voted`
+
 3.  UI functionality: 'X'
 
     Click on the 'x' button.
@@ -48,7 +69,9 @@ Assumptions / Thoughts
     - no additional tabs open
     - telemetry pings are 'correct'
 
-4.  UI fucntionality  'close window'
+      - ending will be `notification-x`
+
+4.  UI functionality  'close window'
 
     Open a 2nd firefox window.  Then close the initial window.
 
@@ -57,7 +80,7 @@ Assumptions / Thoughts
     - no additional tabs open
     - telemetry pings are 'correct'
 
-
+      - ending will be `window-or-fx-closed`
 
 
 

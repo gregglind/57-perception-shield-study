@@ -5,16 +5,22 @@
 - No change: `main` and other pings are UNAFFECTED by this addon.
 - Respects telemetry preferences.  If user has disabled telemetry, no telemetry will be sent.
 
-## `shield-study` pings
+
+
+
+## `shield-study` pings (common to all shield-studies)
 
 `shield-studies-addon-utils` sends the usual packets.
 
 The STUDY SPECIFIC ENDINGS this study supports are:
 
 - "voted",
+- "notification-x"
+- "window-or-fx-closed"
 
 
-## `shield-study-addon` pings
+
+## `shield-study-addon` pings, specific to THIS study.
 
 Two kinds of events are instrumented in this study.
 
@@ -26,6 +32,8 @@ Two kinds of events are instrumented in this study.
 
 
 ## Example Ping Sequence
+
+Presented as split by bucket, but these occur intermixed.
 
 ```
 // shield-study
@@ -81,6 +89,8 @@ Two kinds of events are instrumented in this study.
   }
 ]
 // shield-study-addon
+
+
 [
   {
     "version": 3,
@@ -119,4 +129,6 @@ Two kinds of events are instrumented in this study.
   }
 ]
 ```
+
+
 
