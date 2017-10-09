@@ -82,8 +82,8 @@ describe.only("notification bar", function() {
   async function getPings(driver) {
     const ar = ["shield-study", "shield-study-addon"];
     const out = {};
-    out['shield-study'] = await utils.getTelemetryPings(driver, {type: 'shield-study'});
-    out['shield-study-addon'] = await utils.getTelemetryPings(driver, {type: 'shield-study-addon'});
+    out["shield-study"] = await utils.getTelemetryPings(driver, {type: "shield-study"});
+    out["shield-study-addon"] = await utils.getTelemetryPings(driver, {type: "shield-study-addon"});
     return out;
   }
 
@@ -103,32 +103,32 @@ describe.only("notification bar", function() {
   it("'first button' does the right thing", async() => {
     const notice = await getNotification(driver);
 
-    let noticeConfig = JSON.parse(await notice.getAttribute('data-study-config'));
+    const noticeConfig = JSON.parse(await notice.getAttribute("data-study-config"));
 
-    function expectedVoteAttributes (config, label) {
-      let score = {
-        'yes': '1',
-        'not sure': '0',
-        'no': '-1'
-      }
+    function expectedVoteAttributes(config, label) {
+      const score = {
+        "yes": "1",
+        "not sure": "0",
+        "no": "-1",
+      };
       return {
-        event: 'answered',
-        label: label,
+        event: "answered",
+        label,
         score: score[label],
-        yesFirst: '' + Number(label == 'yes'),
+        yesFirst: "" + Number(label == "yes"),
         promptType: config.promptType,
         branch: config.name,
-        message: config.message
-      }
+        message: config.message,
+      };
     }
 
 
     const nb = await getFirstButton(driver);
-    const label = await nb.getAttribute('label');
+    const label = await nb.getAttribute("label");
     await nb.click();
 
-    //const addons = await utils.allAddons(driver);
-    //console.log(`addons ${addons}`);
+    // const addons = await utils.allAddons(driver);
+    // console.log(`addons ${addons}`);
 
     const pings = await getPings(driver);
 
@@ -141,30 +141,34 @@ describe.only("notification bar", function() {
     // 2.pings are correct (
 
     // 2a. order
-    const states = pings['shield-study'].map(x=>x.payload.data).reverse();
-    let expected_states = [
-      { study_state: 'enter' },
-      { study_state: 'installed' },
+    const states = pings["shield-study"].map(x => x.payload.data).reverse();
+    const expected_states = [
+      { study_state: "enter" },
+      { study_state: "installed" },
 
       // note: it is a VOTED!
-      { study_state: 'ended-neutral', study_state_fullname: 'voted' },
-      { study_state: 'exit' }
+      { study_state: "ended-neutral", study_state_fullname: "voted" },
+      { study_state: "exit" },
     ];
 
     assert.deepEqual(expected_states, states, "study states is wrong");
 
     // 2b. addon ping payloads
-    const attributes = pings['shield-study-addon'].map(x=>x.payload.data.attributes).reverse();
+    const attributes = pings["shield-study-addon"].map(x => x.payload.data.attributes).reverse();
 
     var expected_addon_attributes = [
-      { event: 'prompted', promptType: 'notificationBox-strings-1' },
-      expectedVoteAttributes(noticeConfig, label)
-    ]
+      { event: "prompted", promptType: "notificationBox-strings-1" },
+      expectedVoteAttributes(noticeConfig, label),
+    ];
     assert.deepEqual(expected_addon_attributes, attributes, "study-addon attributes are wrong");
 
     // 2c.  Normal parts of the payload are correct.
-    const payloads = pings['shield-study-addon'].map(x=>x.payload).reverse();
+    const payloads = pings["shield-study-addon"].map(x => x.payload).reverse();
     assert.equal(payloads[0].branch, noticeConfig.name);
 
   });
+
+  it("'x' button should kill study and do right telemetry", async()=>{
+
+  })
 });
