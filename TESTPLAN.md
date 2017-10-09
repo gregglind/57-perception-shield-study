@@ -96,13 +96,13 @@ async function printPings() {
   const pings = await getPings();
 
   function display(pingsArray) {
-    console.log(JSON.stringify(pingsArray,null,2))
-    //pingsArray.map(x => x.payload).reverse().forEach(x=>console.log(x))
+    const payloads = pingsArray.map(x => x.payload).reverse();
+    console.log(JSON.stringify(payloads,null,2))
   }
-  console.log("## shield-study");
+  console.log("// shield-study");
   display(pings['shield-study'])
 
-  console.log("## shield-study-addon");
+  console.log("// shield-study-addon");
   display(pings['shield-study-addon'])
 
 }
