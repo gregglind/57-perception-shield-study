@@ -1,6 +1,6 @@
 {
   "name": "57-perception-shield-study",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Measuring perception for 56 and 57 releases",
   "main": "index.js",
   "repository": "https://github.com/mozilla/template-shield-study.git",
