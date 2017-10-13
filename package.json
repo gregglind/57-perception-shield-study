@@ -37,7 +37,7 @@
     "shield-studies-addon-utils": "^4.0.0"
   },
   "addon": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "id": "57-perception-shield-study@mozilla.com",
     "name": "Measure and ask instruments perpection",
     "minVersion": "55.0",
