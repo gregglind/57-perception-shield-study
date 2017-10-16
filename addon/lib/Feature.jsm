@@ -99,15 +99,15 @@ class Notification {
     // buttons and callbacks:
     // https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XUL/Method/appendNotification
     var buttons = [{
-      label: "yes",
+      label: "Yes",
       callback:  () => onVoted({score: "1", label: "yes"}),
     },
     {
-      label: "not sure",
+      label: "Not sure",
       callback:  () => onVoted({score: "0", label: "not sure"}),
     },
     {
-      label: "no",
+      label: "No",
       callback:  () => onVoted({score: "-1", label: "no"}),
     },
     ];
@@ -164,11 +164,6 @@ class Notification {
     messageText.style.color = "#333";
     const closeButton = doc.getAnonymousNodes(notice)[0].childNodes[1];
     if (closeButton) {
-      if (doc.defaultView.matchMedia("(min-resolution: 2dppx)").matches) {
-        closeButton.setAttribute("style", "-moz-image-region: rect(0, 32px, 32px, 0) !important;");
-      } else {
-        closeButton.setAttribute("style", "-moz-image-region: rect(0, 16px, 16px, 0) !important;");
-      }
       closeButton.addEventListener("click", () => {
         // IMPORTANT, add click handler for 'x'
         this.xclicked = true;
