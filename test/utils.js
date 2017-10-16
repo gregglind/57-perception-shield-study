@@ -28,6 +28,8 @@ const FIREFOX_PREFERENCES = {
   "devtools.debugger.prompt-connection": false,
   "general.warnOnAboutConfig": false,
 
+  "extensions.legacy.enabled": true,
+
   // WARNING:  also of interest, gecko webdriver sets many prefs at:
   // https://dxr.mozilla.org/mozilla-central/source/testing/geckodriver/src/prefs.rs
   // INCLUDING
